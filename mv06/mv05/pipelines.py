@@ -10,6 +10,7 @@ from itemadapter import ItemAdapter
 
 import sqlite3
 
+import logging
 import  sys
 sys.path.append( r"E:\py\scrapy\mv05" )
 
@@ -23,6 +24,12 @@ class Mv05Pipeline:
 
 # 存入sqlite数据库的管道
 class Mv05SQLitePipeline(object):
+
+    @property
+    def logger(self):
+        logger = logging.getLogger( "Mv05SQLitePipeline" )
+        return logging.LoggerAdapter(logger, {'pipeline': self})
+
     #开始
     def open_spider(self, spider):
         # 爬虫项目启动，执行连接数据操作
@@ -43,7 +50,7 @@ class Mv05SQLitePipeline(object):
             #    return False
             #return res[0] == 1
         except sqlite3.OperationalError as oe:
-            print( oe )
+            self.logger.exception( oe )
             return False
 
     def initTable(self):
@@ -60,9 +67,12 @@ class Mv05SQLitePipeline(object):
             L = [
                 item['id'], item['name'], item['url'], item['durat'], item['rating'], item['channel']
             ]
-            # self.cursor.execute("BEGIN TRANSACTION")
-            self.cursor.execute(ins, L)
-            self.db.commit()
+            try:
+                # self.cursor.execute("BEGIN TRANSACTION")
+                self.cursor.execute(ins, L)
+                self.db.commit()
+            except Exception as e:
+                self.logger.exception( "!!! insert data failed with Exception : %(exception)s", { "exception" : e } )
             return item
         else:
             return self.updateUrl( item, spider )
@@ -72,10 +82,13 @@ class Mv05SQLitePipeline(object):
         L = [
             item['downloadurl'], item['ipx'], item['length'], item['id']
         ]
-        #self.cursor.execute("BEGIN TRANSACTION")
+        try:
+            #self.cursor.execute("BEGIN TRANSACTION")
 
-        self.cursor.execute(ins, L)
-        self.db.commit()
+            self.cursor.execute(ins, L)
+            self.db.commit()
+        except Exception as e:
+            self.logger.exception( "!!! update data failed with Exception : %(exception)s", { "exception" : e } )
         return item
 
    # 结束存放数据，在项目最后一步执行
@@ -83,7 +96,7 @@ class Mv05SQLitePipeline(object):
         # close_spider()函数只在所有数据抓取完毕后执行一次，
         self.cursor.close()
         self.db.close()
-        print('执行了close_spider方法,项目已经关闭')
+        self.logger.info('执行了close_spider方法,项目已经关闭')
 
 
 if __name__ == "__main__":

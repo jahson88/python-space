@@ -114,3 +114,27 @@ ITEM_PIPELINES = {
 
 
 SQLITE_FILE = "mvinfo.db"
+
+
+
+# 一般在使用时只会设置LOG_FILE和LOG_LEVEL两个配置项，其他配置项使用默认值
+
+# 指定日志的输出文件
+from datetime import datetime
+LOG_FILE = "./%s-%02d%02d.log"%(BOT_NAME, datetime.now().month, datetime.now().day )
+# 是否使用日志，默认为True
+#LOG_ENABLED
+# 日志使用的编码，默认为UTF-8
+#LOG_ENCODING
+# 日志级别，如果设置了，那么高于该级别的就会输入到指定文件中
+LOG_LEVEL = "DEBUG"
+# 设置日志的输出格式
+#LOG_FORMAT
+# 设置日志的日期输出格式
+#LOG_DATEFORMAT
+# 设置标准输出是否重定向到日志文件中，默认为False,如果设置为True,那么print("hello")就会被重定向到日志文件中
+#LOG_STDOUT
+# 如果设置为True,只会输出根路径，不会输出组件，默认为FALSE
+LOG_SHORT_NAMES = True
+#默认是 False
+LOG_FILE_APPEND = True

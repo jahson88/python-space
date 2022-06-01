@@ -9,7 +9,8 @@ sys.path.append( r"E:\py\scrapy\mv05" )
 from mv05.items import Mv05Item
 
 
-mvids = []
+#全局变量，已经获取downloadurl的id放入，如果已经存在，则不重复挖掘。
+mvids = set()
 
 
 class MovieSpider(scrapy.Spider):
@@ -73,9 +74,9 @@ class MovieSpider(scrapy.Spider):
 
         result = response.xpath(
             '//div[@id="list_videos_common_videos_list_items"]/div[@class="item"]')
-        print('-' * 60)
-        print(len( result ))
-        print('-' * 60)
+        #print('-' * 60)
+        self.logger.info( "parseListPage item size : %d" % len( result ))
+        #print('-' * 60)
         #pageUrl = response.url
         #mvs = []
         for e in result:
@@ -93,7 +94,7 @@ class MovieSpider(scrapy.Spider):
             data["name"] = data["url"].split( "/")[-2]
             data["durat"] = e.xpath('./span/span[@class="durat info"]/text()').extract_first()
             data["rating"] = "".join( e.xpath('./a/div/span[@class="rating info"]/text()').extract()).strip( "\n\t")
-            mvids.append( data["id"] )
+            mvids.add( data["id"] )
             yield  data
             yield scrapy.Request(url=self.fullUrl( data["url"] ), callback=self.parsePlayPage )
 
@@ -112,14 +113,14 @@ class MovieSpider(scrapy.Spider):
             # css( '.next' )
             if result[ -1 ].xpath( '//li[contains(@class, "next")]' ):
                 lastPageIdx = -2
-            print( lastPageIdx )
+            self.logger.info( lastPageIdx )
             lastPage = result[ lastPageIdx ]
-            print( lastPage.get()[ 0 : 300 ] )
+            self.logger.info( lastPage.get()[ 0 : 300 ] )
             lastPageNum = lastPage.xpath( './a[@data-parameters]/text()' ).extract_first()
-            print( "获得分页数" + lastPageNum )
+            self.logger.info( "获得分页数" + lastPageNum )
 
             pageparameters = lastPage.xpath( './a/@data-parameters' ).extract_first()
-            print( pageparameters[0:200] )
+            self.logger.info( pageparameters[0:200] )
             params = makeDict( pageparameters )
             channel = getChannelFromURL( response.url )
 
@@ -130,7 +131,7 @@ class MovieSpider(scrapy.Spider):
                 #https://x.com/category/hd/?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&mode=async&rn=1864&from=02&_=1653161725163
                 nextpageurl = 'https://{0}{1}?mode=async&function=get_block&block_id=list_videos_common_videos_list&sort_by=post_date&mode=async&rn={2}&from={3}&_={4}'.format(
                     self.allowed_domains[0], channel, params['rn'], pagenum, random )
-                print( nextpageurl )
+                self.logger.info( nextpageurl )
                 #yield  scrapy.Request(url=nextpageurl, callback=self.parseListPage )
 
     def _makePageNum(self , num ):
